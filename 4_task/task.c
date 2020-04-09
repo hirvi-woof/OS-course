@@ -17,7 +17,7 @@ int main()
 	
 	if (head == NULL)
 	{
-		perror("Can't allocate memory.\n");
+		perror("Can't allocate memory for the head.\n");
 		return 1;
 	}
 	head->next = NULL;
@@ -37,17 +37,17 @@ int main()
 		node *tmp = (node*)malloc(sizeof(node));
 		if (tmp == NULL)
 		{
-			perror("Can't allocate memory.\n");
+			perror("Can't allocate memory for a node.\n");
 			return 1;
 		}	
 
-		tmp->buff = (char*)malloc(sizeof(char)*strlen(buffer) + 1);
+		tmp->buff = strdup(buffer);
 		if (tmp->buff == NULL)
 		{
-			perror("Can't allocate memory.\n");
+			perror("Can't allocate memory for a string.\n");
 			return 1;
 		}	
-		strcpy(tmp->buff, buffer);
+		
 		tmp->next = NULL;
 		p->next = tmp;
 		p = p->next;
