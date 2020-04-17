@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 	int line_cnt, size, file_dscrpt;
 	if (argc < 2)
 	{
-		perror("not enough arguments");
+		printf("error - not enough arguments; usage: %s file_name\n", argv[0]);
 		exit(-1);
 	}
 
@@ -34,9 +34,15 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 	size = read_file(buffer, file_dscrpt);
-	if(size == -1)
+	if(size == -1 && errno != EINTR)
 	{
 		close(file_dscrpt);
+		int err = close(file_dscrpt);
+                if (err == -1)
+                {
+                        perror("can'r close file");
+                        exit(-1);
+                }
 		exit(-1);
 	}
 	
@@ -44,11 +50,22 @@ int main(int argc, char **argv)
 
 	if(run_request_mode(buffer, shifts, lengths, file_dscrpt, size, line_cnt) == -1)
 	{
-		close(file_dscrpt);
+		int err = close(file_dscrpt);
+                if (err == -1)
+                {
+                        perror("can'r close file");
+                        exit(-1);
+                }
 		exit(-1);
 	}
 
-	close(file_dscrpt);
+	int err = close(file_dscrpt);
+        if (err == -1)
+        {
+	        perror("can'r close file");
+                exit(-1);
+        }
+
 	return 0;
 }
 
@@ -66,7 +83,7 @@ int read_file(char *buffer, int dscrpt)
                 perror("can't get set pointer to the beginning of file(lseek)");
                 return -1;
         }   		
-	if (read(dscrpt, buffer, size) == -1)
+	if (read(dscrpt, buffer, size) == -1 && errno != EINTR)
     	{
 	      	perror("can't read file");
         	return -1;
@@ -150,7 +167,7 @@ int run_request_mode(char *buffer, int *shifts, int *lengths, int dscrpt, int si
                 	return -1;
          	}
         	err = read(dscrpt, buffer_line, lengths[line_num]);
-       	 	if (err == -1)
+       	 	if (err == -1 && errno != EINTR)
 		{	
 			perror("can't read line from file");
             		return -1;
