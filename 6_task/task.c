@@ -21,9 +21,10 @@ int main(int argc, char **argv)
 	char buffer[SIZE_BUFF];
 	int shifts[SIZE_LINE], lengths[SIZE_LINE];
 	int line_cnt, size, file_dscrpt;
+	int err;
 	if (argc < 2)
 	{
-		printf("error - not enough arguments; usage: %s file_name\n", argv[0]);
+		err = printf("error - not enough arguments; usage: %s file_name\n", argv[0]);
 		exit(-1);
 	}
 
@@ -34,15 +35,11 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 	size = read_file(buffer, file_dscrpt);
-	if(size == -1 && errno != EINTR)
+	if(size == -1)
 	{
-		close(file_dscrpt);
-		int err = close(file_dscrpt);
+		err = close(file_dscrpt);
                 if (err == -1)
-                {
-                        perror("can'r close file");
-                        exit(-1);
-                }
+			perror("can't close file");
 		exit(-1);
 	}
 	
@@ -50,21 +47,22 @@ int main(int argc, char **argv)
 
 	if(run_request_mode(buffer, shifts, lengths, file_dscrpt, size, line_cnt) == -1)
 	{
-		int err = close(file_dscrpt);
+		err = close(file_dscrpt);
+		if (err == -1)
+		{
+			perror("can'r close file");
+			exit(-1);
+		}
+		exit(-1);
+	}
+
+
+	err = close(file_dscrpt);
                 if (err == -1)
                 {
                         perror("can'r close file");
                         exit(-1);
                 }
-		exit(-1);
-	}
-
-	int err = close(file_dscrpt);
-        if (err == -1)
-        {
-	        perror("can'r close file");
-                exit(-1);
-        }
 
 	return 0;
 }
@@ -83,10 +81,18 @@ int read_file(char *buffer, int dscrpt)
                 perror("can't get set pointer to the beginning of file(lseek)");
                 return -1;
         }   		
-	if (read(dscrpt, buffer, size) == -1 && errno != EINTR)
-    	{
-	      	perror("can't read file");
-        	return -1;
+	err = read(dscrpt, buffer, size);
+    	if (err == -1)
+        {
+                while (err == -1 && errno == EINTR)
+               	{
+                	 err = read(dscrpt, buffer, size);
+        	}
+       	        if (errno != EINTR)
+       	        {
+    	                perror("can't write to the terminal");
+               	        return -1;
+                }   
 	}
 	
 	if (lseek(dscrpt, 0, SEEK_SET) == -1L)
@@ -117,23 +123,19 @@ int fill_shift_table(char *buffer, int *shifts, int *lengths, int size)
 		length = 0;
 		i++;		
 	}
-	for (int k = 0; k < line_cnt; k++)
-	{
-		printf("line: %d; shift: %d; length: %d\n", k, shifts[k], lengths[k]);
-	}
 	return line_cnt;
 }
 
 int run_request_mode(char *buffer, int *shifts, int *lengths, int dscrpt, int size, int line_cnt)
 {
+	int flag = 0, line_num;
 	struct pollfd fds;
  	fds.fd = STDIN_FILENO;
     	fds.events = POLLIN;
-	char *buffer_line[SIZE_LINE];
-	int flag = 0, line_num, STDOUT = 1, err;
 	printf("exit: print -1.\nenter number of the line you want to be printed:\n");
 	while(!flag)
 	{
+		int err;
 		err = poll(&fds, 1, 5000);
         	if (err == 0)
         	{
@@ -146,11 +148,19 @@ int run_request_mode(char *buffer, int *shifts, int *lengths, int dscrpt, int si
            	 	perror("can't do a poll");
            		return -1;
         	}
-		if(scanf("%d", &line_num) == 0)
-		{
-			perror("can't read line from terminal");
-			return -1;
-		}
+		err = scanf("%d", &line_num);
+		if (err == 0)
+                {
+                        while (err == -1 && errno == EINTR)
+                        {
+                                 err = scanf("%d", &line_num);
+                        }
+                        if (errno != EINTR)
+                        {
+                                perror("can't read from the terminal");
+                                return -1;
+                        }
+                }
 		if (line_num == -1)
 		{
 			flag = 1;
@@ -166,17 +176,35 @@ int run_request_mode(char *buffer, int *shifts, int *lengths, int dscrpt, int si
                 	perror("can't set pointer to the beginning of file(lseek)");
                 	return -1;
          	}
-        	err = read(dscrpt, buffer_line, lengths[line_num]);
-       	 	if (err == -1 && errno != EINTR)
+        	if(err = read(dscrpt, buffer, lengths[line_num]) == -1 && errno != EINTR)
 		{	
-			perror("can't read line from file");
-            		return -1;
+			while (err == -1 && errno == EINTR)
+			{
+				if (lseek(dscrpt, shifts[line_num], SEEK_SET) == -1L)
+                		{
+                        		perror("can't set pointer to the beginning of file(lseek)");
+                	        	return -1;
+		                }
+                        	err = read(dscrpt, buffer, lengths[line_num]);
+			}
+			if (errno != EINTR)
+			{
+				perror("can't read line from file");
+            			return -1;
+			}
         	}
-        	err = write(1, buffer_line, lengths[line_num]);
+        	err = write(1, buffer, lengths[line_num]);
 		if (err == -1)
 		{
-			perror("can't write to the terminal");
-			return -1;
+			while (err == -1 && errno == EINTR)
+                        {
+             			 err = write(1, buffer, lengths[line_num]);
+                        }	
+			if (errno != EINTR)
+                        {
+				perror("can't write to the terminal");
+				return -1;
+			}		
 		}
 	}
 	return 0;
