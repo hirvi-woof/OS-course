@@ -32,17 +32,11 @@ int main()
 		err = write(dscrpt[1], buffer_send, SIZE);
 		if (err == -1)
 		{
-			while (err == -1 && errno == EINTR)
-                        {
-             			err = write(dscrpt[1], buffer_send, SIZE);
-                        }
-			if (errno != EINTR)
-                        {
-				perror("can't write to the terminal");
-				exit(-1);
-			}
+			perror("can't write to the terminal");
+			exit(-1);
 		}
-		if(close(dscrpt[1]) == -1)
+		err = close(dscrpt[1]);
+		if(err == -1)
 		{
 			perror("can't close file");
 			exit(-1);
@@ -53,15 +47,8 @@ int main()
 	err = read(dscrpt[0], buffer_recv, SIZE);
     	if (err == -1)
        	{
-               	while (err == -1 && errno == EINTR)
-       	 	{
-                	err = read(dscrpt[0], buffer_recv, SIZE);
-        	}
-       	        if (errno != EINTR)
-       	        {
-    	               	perror("can't read from buffer");
-               	       	return -1;
-                }
+		perror("can't read from buffer");
+               	return -1;
 	}
 	
 	for(int i = 0; i < strlen(buffer_recv); i++)
@@ -70,7 +57,8 @@ int main()
 	}
 
 	printf("%s\n", buffer_recv);
-	if(close(dscrpt[0]) == -1)
+	err = close(dscrpt[0]);
+	if(err == -1)
 	{
 		perror("can't close file");
 		exit(-1);
