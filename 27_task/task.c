@@ -42,8 +42,18 @@ int main(int argc, char* argv[])
 		}
 	} while(ptr);
 
-	fclose(file);
-	pclose(channel);
+	err = fclose(file);
+	if(err == -1)
+	{
+		perror("can't call fclose");
+		exit(-1);
+	}
+	err = pclose(channel);
+	if(err == -1)
+	{
+		perror("can't call pclose");
+		exit(-1);
+	}
 	return 0;
 }
 
