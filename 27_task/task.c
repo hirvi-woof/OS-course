@@ -14,9 +14,9 @@ int main(int argc, char* argv[])
                 err = printf("error - not enough arguments; usage: %s file_name\n", argv[0]);
                 exit(-1);
         }
-        strcat(cmd, "cat ");
+        strcat(cmd, "egrep \"^$\" ");
         strcat(cmd, argv[1]);
-        strcat(cmd, " | egrep \"^$\" | wc -l");
+        strcat(cmd, " | wc -l");
 
         channel = popen(cmd, "r");
 
