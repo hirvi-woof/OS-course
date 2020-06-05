@@ -10,17 +10,18 @@
 
 int main()
 {
-	char buff[SIZE] = "ThiS is sOmE tExt\n";
-	FILE *out;
-	int err;
-	out = popen("./_task", "w");
-	if(out == 0)
-	{
-		perror("can't call popen");
-		exit(-1);
-	}
-	fputs(buff, out);
-	err = pclose(out);
+        char buff[SIZE] = "ThiS is sOmE tExt\n";
+        FILE *out;
+        int err, err_p;
+
+        out = popen("./_task", "w");
+        if(out == 0)
+        {
+                perror("can't call popen");
+                exit(-1);
+        }
+        err_p = fputs(buff, out);
+        err = pclose(out);
         if(err == -1)
         {
                 perror("can't call pclose\n");
@@ -30,12 +31,16 @@ int main()
         {
                 printf("some problems: child process ended up with status: %d\n", WEXITSTATUS(err));
                 exit(-1);
-        }  
-        else
+        }
+        else if(WIFEXITED(err) == 0)
         {
                 perror("some problems: child process ended up incorrectly\n");
                 exit(-1);
         }
-	return 0;
+        if(err_p == EOF)
+        {
+                perror("can't call put");
+                exit(-1);
+        }
+        return 0;
 }
-
