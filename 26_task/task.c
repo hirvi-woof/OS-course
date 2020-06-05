@@ -21,11 +21,21 @@ int main()
 	}
 	fputs(buff, out);
 	err = pclose(out);
-	if(err == -1)
-	{
-		perror("can't call pclose");
-		exit(-1);
-	}
+        if(err == -1)
+        {
+                perror("can't call pclose\n");
+                exit(-1);
+        }
+        if(WIFEXITED(err) != 0 && WEXITSTATUS(err) != 0)
+        {
+                printf("some problems: child process ended up with status: %d\n", WEXITSTATUS(err));
+                exit(-1);
+        }  
+        else
+        {
+                perror("some problems: child process ended up incorrectly\n");
+                exit(-1);
+        }
 	return 0;
 }
 
