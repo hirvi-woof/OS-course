@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
                         exit(-1);
                 }
                 printf("result: %d\n", result);
+                exit(0);
         }
         else
         {
