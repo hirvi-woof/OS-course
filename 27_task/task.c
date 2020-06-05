@@ -19,21 +19,32 @@ int main(int argc, char* argv[])
         strcat(cmd, " | wc -l");
 
         channel = popen(cmd, "r");
-
-        if(channel == 0)
+        if(channel == NULL)
         {
-                perror("can't call popen");
+                perror("can't call popen\n");
                 exit(-1);
         }
 
-        fgets(res, SIZE, channel);
-        result = atoi(res);
-        printf("result: %d\n", result);
+        fscanf(channel, "%d", &result);
 
         err = pclose(channel);
         if(err == -1)
         {
-                perror("can't call pclose");
+                perror("can't call pclose\n");
+                exit(-1);
+        }
+        if(WIFEXITED(err) != 0)
+        {
+                if(WEXITSTATUS(err) != 0)
+                {
+                        printf("some problems: child process ended up with status: %d\n", WEXITSTATUS(err));
+                        exit(-1);
+                }
+                printf("result: %d\n", result);
+        }
+        else
+        {
+                perror("some problems: child process ended up incorrectly\n");
                 exit(-1);
         }
         return 0;
