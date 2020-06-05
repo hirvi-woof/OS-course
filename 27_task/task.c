@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
                 printf("result: %d\n", result);
                 exit(0);
         }
-        else
+        else if(WIFEXITED(err) == 0)
         {
                 perror("some problems: child process ended up incorrectly\n");
                 exit(-1);
